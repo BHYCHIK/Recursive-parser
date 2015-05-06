@@ -16,8 +16,8 @@ class RecursiveSyntaxParser(object):
     def match(self, term):
         if self.is_on_top(term):
             self.remove_top_token()
-            return True
-        return False
+            return [term]
+        return None
 
     def is_identifier_on_top(self):
         if self.get_current_terminal().startswith('id_'):
@@ -44,66 +44,138 @@ class RecursiveSyntaxParser(object):
         if self.is_identifier_on_top():
             return self.match(self.get_current_terminal())
         elif self.is_on_top('('):
-            return self.match('(') and self.simple_expr() and self.match(')')
+            if self.match('(') is None:
+                return None
+            simple_expr_res = self.simple_expr()
+            if simple_expr_res is None:
+                return None
+            if self.match(')') is None:
+                return None
+            return simple_expr_res
         elif self.is_on_top('not'):
-            return self.match('not') and self.factor()
-        return False
+            match_not_res = self.match('not')
+            if match_not_res is None:
+                return None
+            factor_res = self.factor()
+            if factor_res is None:
+                return None
+            return factor_res + match_not_res
+        return None
 
     def term_rest(self):
-        if self.op_mul():
-            return self.factor() and self.term_rest()
-        return True
+        mul_res = self.op_mul()
+        if mul_res is not None:
+            factor_res = self.factor()
+            if factor_res is None:
+                return None
+            term_rest_res = self.term_rest()
+            if term_rest_res is None:
+                return None
+            return factor_res + mul_res + term_rest_res
+        return []
 
     def term(self):
-        return self.factor() and self.term_rest()
+        factor_res = self.factor()
+        if factor_res is None:
+            return None
+        term_rest_res = self.term_rest()
+        if term_rest_res is None:
+            return None
+        return factor_res + term_rest_res
 
     def single_expr_rest(self):
-        if not self.op_add():
-            return True
-        return self.term() and self.single_expr_rest()
+        op_add_res = self.op_add()
+        if op_add_res is None:
+            return []
+        term_res = self.term()
+        if term_res is None:
+            return None
+        single_expr_rest_res = self.single_expr_rest()
+        if single_expr_rest_res is None:
+            return None
+        return term_res + op_add_res + single_expr_rest_res
     
     def simple_expr(self):
-        self.sign()
-        if not self.term():
-            return False
-        return self.single_expr_rest()
+        sign_res = self.sign()
+        term_res = self.term()
+        if term_res is None:
+            return None
+        signle_expr_rest_res = self.single_expr_rest()
+        if signle_expr_rest_res is None:
+            return None
+        result = term_res
+        if sign_res is not None:
+            if sign_res[0] == '-':
+                result += ['_']
+        result += signle_expr_rest_res
+        return result
 
     def expr(self):
-        if not self.simple_expr():
-            return False
-        if self.rel_op():
-            return self.simple_expr()
-        return True
+        simple_expr_res = self.simple_expr()
+        if simple_expr_res is None:
+            return None
+        res = simple_expr_res
+        rel_op_res = self.rel_op()
+        if rel_op_res is not None:
+            simpl_expr_res2 = self.simple_expr()
+            if simpl_expr_res2 is None:
+                return None
+            res += simpl_expr_res2 + rel_op_res
+        return res
     
     def op(self):
         if self.is_identifier_on_top():
-            result = self.match(self.get_current_terminal()) and self.match('=') and self.expr()
-            return result
+            f1 = self.match(self.get_current_terminal())
+            if f1 is None:
+                return None
+            f2 = self.match('=')
+            if f2 is None:
+                return None
+            f3 = self.expr()
+            if f3 is None:
+                return None
+            return f1 + f3 + f2
         return self.block()
 
     def tail(self):
         if self.is_on_top(';'):
-            result = self.match(';') and self.op() and self.tail()
-            return result
-        return True
+            if self.match(';') is None:
+                return None
+            f1 = self.op()
+            if f1 is None:
+                return None
+            f2 = self.tail()
+            if f2 is None:
+                return None
+            return f1 + f2
+        return []
 
     def op_list(self):
-        result = self.op() and self.tail()
-        return result
+        op_res = self.op()
+        if op_res is None:
+            return None
+        tail_res = self.tail()
+        if tail_res is None:
+            return None
+        return op_res + tail_res
 
     def block(self):
         if self.is_on_top('{'):
-            result = self.match('{') and self.op_list() and self.match('}')
+            if self.match('{') is None:
+                return None
+            result = self.op_list()
+            if self.match('}') is None:
+                return None
             return result
         else:
             print 'Block not opened with {'
-            return False
+            return None
     
     def program(self):
         result = self.block()
         if len(self._tokens) != 0:
             print 'Syntax error'
-            return False
+            return None
         return result
 
 input_strings = []
@@ -112,5 +184,8 @@ for string in sys.stdin:
 tokens = ' '.join(input_strings).split()
 parser = RecursiveSyntaxParser(tokens)
 result = parser.program()
-print parser._tokens
-print result
+if result is None:
+    print 'Error'
+else:
+    for token in result:
+        print token
