@@ -22,7 +22,6 @@ class RecursiveSyntaxParser(object):
     def is_identifier_on_top(self):
         if self.get_current_terminal().startswith('id_'):
             return True
-        print 'TESTING IDENTIFIER %s: %s' % (self.get_current_terminal(), self.get_current_terminal().isdigit())
         return self.get_current_terminal().isdigit()
  
     def op_mul(self):
@@ -95,7 +94,6 @@ class RecursiveSyntaxParser(object):
     def block(self):
         if self.is_on_top('{'):
             result = self.match('{') and self.op_list() and self.match('}')
-            print 'BLOCK RESULT %s' % result
             return result
         else:
             print 'Block not opened with {'
