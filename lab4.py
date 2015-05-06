@@ -124,6 +124,7 @@ class RecursiveSyntaxParser(object):
         return res
     
     def op(self):
+        print 'IN OP: %s' % self._tokens
         if self.is_identifier_on_top():
             f1 = self.match(self.get_current_terminal())
             if f1 is None:
@@ -138,6 +139,7 @@ class RecursiveSyntaxParser(object):
         return self.block()
 
     def tail(self):
+        print 'IN TAIL: %s' % self._tokens
         if self.is_on_top(';'):
             if self.match(';') is None:
                 return None
@@ -151,6 +153,7 @@ class RecursiveSyntaxParser(object):
         return []
 
     def op_list(self):
+        print 'IN OPLIST: %s' % self._tokens
         op_res = self.op()
         if op_res is None:
             return None
@@ -160,15 +163,21 @@ class RecursiveSyntaxParser(object):
         return op_res + tail_res
 
     def block(self):
+        print 'IN BLOCK: %s' % self._tokens
         if self.is_on_top('{'):
             if self.match('{') is None:
+                print 'ERROR EXITING BLOCK: %s' % self._tokens
                 return None
             result = self.op_list()
             if self.match('}') is None:
+                print 'ERROR EXITING BLOCK: %s' % self._tokens
                 return None
+            print 'EXITING BLOCK: %s' % self._tokens
             return result
         else:
+            print self._tokens
             print 'Block not opened with {'
+            print 'ERROR EXITING BLOCK: %s' % self._tokens
             return None
     
     def program(self):
