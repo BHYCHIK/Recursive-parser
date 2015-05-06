@@ -4,5 +4,6 @@
     {
         id_a = id_a + id_b
     } ;
-    id_a = 0
+    id_a = 0 ;
+    id_c = id_a > id_b 
 }

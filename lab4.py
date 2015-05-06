@@ -212,6 +212,8 @@ class StackMachine(object):
         return op in ['+', '-', 'mod', 'div', 'and', '*', '/', 'or', '==', '<>', '<' , '<=', '>', '>=', '=', 'not', '_']
 
     def get_value(self, element):
+        if not isinstance(element, str):
+            return element
         if self.is_digit(element):
             return int(element)
         elif self.is_identifier(element):
