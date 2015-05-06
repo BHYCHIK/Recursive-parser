@@ -178,6 +178,95 @@ class RecursiveSyntaxParser(object):
             return None
         return result
 
+class StackMachine(object):
+    def reset(self):
+        self._variables = dict()
+        self._stack = []
+
+    def push(self, element):
+        self._stack.append(element)
+
+    def pop(self):
+        return self._stack.pop()
+    
+    def is_identifier(self, id):
+        return id.startswith('id_')
+
+    def is_digit(self, digit):
+        if isinstance(digit, int):
+            return True
+        if isinstance(digit, float):
+            return True
+        return digit.isdigit()
+
+    def is_op(self, op):
+        return op in ['+', '-', 'mod', 'div', 'and', '*', '/', 'or', '==', '<>', '<' , '<=', '>', '>=', '=', 'not', '_']
+
+    def get_value(self, element):
+        if self.is_digit(element):
+            return int(element)
+        elif self.is_identifier(element):
+            return self._variables[element]
+    
+    def act(self, state):
+        if state == '_':
+            arg1 = self.get_value(self.pop())
+            self.push(0 - arg1)
+            return
+        
+        if state == 'not':
+            arg1 = self.get_value(self.pop())
+            self.push(not arg1)
+            return
+        
+        if state == '=':
+            value = self.get_value(self.pop())
+            varname = self.pop()
+            self._variables[varname] = value
+            print 'Setting %s = %s' % (varname, value)
+            return
+        
+        arg2 = self.get_value(self.pop())
+        arg1 = self.get_value(self.pop())
+        if state == '+':
+            self.push(arg1 + arg2)
+        elif state == '-':
+            self.push(arg1 - arg2)
+        elif state == '*':
+            self.push(arg1 * arg2)
+        elif state == '/':
+            self.push(float(arg1) + arg2)
+        elif state == 'mod':
+            self.push(arg1 % arg2)
+        elif state == 'div':
+            self.push(arg1 / arg2)
+        elif state == '==':
+            self.push(arg1 == arg2)
+        elif state == '<>':
+            self.push(arg1 != arg2)
+        elif state == '<':
+            self.push(arg1 < arg2)
+        elif state == '<=':
+            self.push(arg1 == arg2)
+        elif state == '>':
+            self.push(arg1 > arg2)
+        elif state == '>=':
+            self.push(arg1 >= arg2)
+        elif state == 'and':
+            self.push(arg1 and arg2)
+        elif state == 'or':
+            self.push(arg1 or arg2)
+
+    def run(self, program):
+        for state in program:
+            if self.is_op(state):
+                self.act(state)
+            else:
+                self.push(state)
+
+    def __init__(self):
+        self.reset()
+
 input_strings = []
 for string in sys.stdin:
     input_strings.append(string)
@@ -186,6 +275,14 @@ parser = RecursiveSyntaxParser(tokens)
 result = parser.program()
 if result is None:
     print 'Error'
+    sys.exit(1)
 else:
+    print 'Polish notation'
     for token in result:
         print token
+
+print
+print
+print 'Running stack machine'
+machine = StackMachine()
+machine.run(result)
