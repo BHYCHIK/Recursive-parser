@@ -5,5 +5,9 @@
         id_a = id_a + id_b
     } ;
     id_a = 0 ;
-    id_c = id_a > id_b 
+    id_c = id_a > id_b ;
+    id_d = id_a < id_b ;
+    id_cmp = id_c and id_b ;
+    id_cmp2 = id_c or id_d ;
+    id_cmp2 = not id_c or not id_d
 }
