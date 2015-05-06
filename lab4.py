@@ -20,7 +20,10 @@ class RecursiveSyntaxParser(object):
         return False
 
     def is_identifier_on_top(self):
-        return self.get_current_terminal().startswith('id_')
+        if self.get_current_terminal().startswith('id_'):
+            return True
+        print 'TESTING IDENTIFIER %s: %s' % (self.get_current_terminal(), self.get_current_terminal().isdigit())
+        return self.get_current_terminal().isdigit()
  
     def op_mul(self):
         if self.get_current_terminal() in ('*', '/', 'and', 'div', 'mod'):
@@ -40,7 +43,7 @@ class RecursiveSyntaxParser(object):
 
     def factor(self):
         if self.is_identifier_on_top():
-            return True
+            return self.match(self.get_current_terminal())
         elif self.is_on_top('('):
             return self.match('(') and self.simple_expr() and self.match(')')
         elif self.is_on_top('not'):
@@ -82,6 +85,7 @@ class RecursiveSyntaxParser(object):
     def tail(self):
         if self.is_on_top(';'):
             result = self.match(';') and self.op() and self.tail()
+            return result
         return True
 
     def op_list(self):
